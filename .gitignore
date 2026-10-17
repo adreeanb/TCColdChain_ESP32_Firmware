@@ -3,3 +3,20 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Compiled C++ Object files and binaries
+*.o
+*.obj
+*.out
+*.hex
+*.bin
+*.elf
