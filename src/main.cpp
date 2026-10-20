@@ -20,7 +20,7 @@ PubSubClient client(espClient);
 
 unsigned long lastMsg = 0;
 unsigned long lastReconnectAttempt = 0;
-bool redeEstavaFora = false; // Flag para detetar quando a rede voltar
+bool redeEstavaFora = false; // Flag para quando a rede voltar
 
 void setup_wifi() {
   Serial.print("\nConectando ao Wi-Fi: ");
@@ -42,7 +42,7 @@ void reconnect() {
 }
 
 // ---------------------------------------------------------
-// FASE 1: STORE (Armazenar offline)
+// 1: STORE
 // ---------------------------------------------------------
 void salvarDadoOffline(float temperatura) {
   File file = SPIFFS.open("/dados_offline.json", FILE_APPEND);
@@ -66,7 +66,7 @@ void salvarDadoOffline(float temperatura) {
 }
 
 // ---------------------------------------------------------
-// FASE 2: FORWARD (Reencaminhar ao conectar)
+// 2: FORWARD
 // ---------------------------------------------------------
 void realizarForward() {
   // Verifica se o arquivo existe
@@ -85,24 +85,24 @@ void realizarForward() {
   // Lê o arquivo linha por linha
   while (file.available()) {
     String linha = file.readStringUntil('\n');
-    linha.trim(); // Remove quebras de linha invisíveis
+    linha.trim(); // Remove quebras de linha
     
     if (linha.length() > 0) {
-      // Publica no tópico "historico" para diferenciar das leituras ao vivo
+      // Publica no "historico" para diferenciar das leituras em tempo real
       if (client.publish("tcc/adrian/temperatura/historico", linha.c_str())) {
         Serial.print(" -> Enviado: ");
         Serial.println(linha);
-        delay(100); // Pequeno atraso para não inundar e travar o Broker
+        delay(100); // delay para não travar o Broker
       } else {
         Serial.println(" -> Erro ao publicar pacote. Abortando Forward.");
         sucessoTotal = false;
-        break; // Interrompe o envio se o broker desconectar no meio
+        break; // Interromper o envio se o houver falha de conexão no broker
       }
     }
   }
   file.close();
 
-  // Se tudo foi enviado sem erros, apaga o arquivo para liberar memória
+  // Se bem sucedido, apaga o arquivo e libera a memória f 
   if (sucessoTotal) {
     SPIFFS.remove("/dados_offline.json");
     Serial.println("[FORWARD] Todos os dados sincronizados. Memoria local limpa.");
@@ -127,9 +127,9 @@ void setup() {
 }
 
 void loop() {
-  // Lógica de gerência de rede
+
   if (!client.connected()) {
-    redeEstavaFora = true; // Sinaliza que estamos offline
+    redeEstavaFora = true; // Sinaliza que esta off
     unsigned long now = millis();
     if (now - lastReconnectAttempt > 5000) {
       lastReconnectAttempt = now;
@@ -140,7 +140,7 @@ void loop() {
   } else {
     client.loop();
     
-    // Se a rede estava fora e acabou de voltar, executa o FORWARD
+    // Se a rede estava fora e voltou, executa o FORWARD
     if (redeEstavaFora) {
       realizarForward();
       redeEstavaFora = false; // Reseta a flag para não ficar enviando em loop
